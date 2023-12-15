@@ -22,7 +22,8 @@ DUPLICATE = """
         <img src="https://bit.ly/3gLdBN6" alt="Duplicate Space" style="margin-right: 10px;">
     </a>
 </div>
-"""
+"""  # noqa: E501 title/docs
+
 
 def load_model(img):
     # Load model, get results and return detections/labels
@@ -60,7 +61,7 @@ def annotator(
     colorcir,
     colorlabel,
     colorhalo,
-    colortri
+    colortri,
 ):
     """
     Function that changes the color of annotators
@@ -126,12 +127,12 @@ def annotator(
         # Draw HeatMapAnnotator
         heatmap_annotator = sv.HeatMapAnnotator()
         img = heatmap_annotator.annotate(img, detections=detections)
-    
+
     if "Dot" in annotators:
         # Draw DotAnnotator
         dot_annotator = sv.DotAnnotator()
         img = dot_annotator.annotate(img, detections=detections)
-    
+
     if "Triangle" in annotators:
         # Draw TriangleAnnotator
         tri_annotator = sv.TriangleAnnotator(sv.Color.from_hex(str(colortri)))
@@ -179,7 +180,7 @@ with gr.Blocks(theme=purple_theme) as app:
             "Pixelate",
             "HeatMap",
             "Dot",
-            "Triangle"
+            "Triangle",
         ],
         value=["BoundingBox", "Mask"],
         label="Select Annotators:",
