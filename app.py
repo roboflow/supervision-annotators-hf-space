@@ -1,4 +1,5 @@
 import os  # added for cache_examples
+from pathlib import Path
 
 import gradio as gr
 import numpy as np
@@ -43,9 +44,9 @@ DESC = """
 """  # noqa: E501 title/docs
 
 
-def load_model(img):
+def load_model(img, model: str | Path = "yolov8s-seg.pt"):
     # Load model, get results and return detections/labels
-    model = YOLO("yolov8s-seg.pt")
+    model = YOLO(model=model)
     result = model(img, verbose=False, imgsz=1280)[0]
     detections = sv.Detections.from_ultralytics(result)
     labels = [
@@ -71,6 +72,7 @@ def calculate_crop_dim(a, b):
 
 def annotator(
     img,
+    model,
     annotators,
     colorbb,
     colormask,
@@ -80,6 +82,7 @@ def annotator(
     colorlabel,
     colorhalo,
     colortri,
+    colordot,
 ):
     """
     Function that changes the color of annotators
@@ -93,7 +96,7 @@ def annotator(
 
     img = img[..., ::-1].copy()  # BGR to RGB using numpy
 
-    detections, labels = load_model(img)
+    detections, labels = load_model(img, model)
 
     if "Blur" in annotators:
         # Apply Blur
@@ -101,7 +104,7 @@ def annotator(
         img = blur_annotator.annotate(img, detections=detections)
 
     if "BoundingBox" in annotators:
-        # Draw Bounding box
+        # Draw Boundingbox
         box_annotator = sv.BoundingBoxAnnotator(sv.Color.from_hex(str(colorbb)))
         img = box_annotator.annotate(img, detections=detections)
 
@@ -111,7 +114,7 @@ def annotator(
         img = mask_annotator.annotate(img, detections=detections)
 
     if "Ellipse" in annotators:
-        # Draw ellipse
+        # Draw Ellipse
         ellipse_annotator = sv.EllipseAnnotator(sv.Color.from_hex(str(colorellipse)))
         img = ellipse_annotator.annotate(img, detections=detections)
 
@@ -121,7 +124,7 @@ def annotator(
         img = corner_annotator.annotate(img, detections=detections)
 
     if "Circle" in annotators:
-        # Draw circle
+        # Draw Circle
         circle_annotator = sv.CircleAnnotator(sv.Color.from_hex(str(colorcir)))
         img = circle_annotator.annotate(img, detections=detections)
 
@@ -132,7 +135,7 @@ def annotator(
         img = label_annotator.annotate(img, detections=detections, labels=labels)
 
     if "Pixelate" in annotators:
-        # Draw PixelateAnnotator
+        # Apply PixelateAnnotator
         pixelate_annotator = sv.PixelateAnnotator()
         img = pixelate_annotator.annotate(img, detections=detections)
 
@@ -147,8 +150,8 @@ def annotator(
         img = heatmap_annotator.annotate(img, detections=detections)
 
     if "Dot" in annotators:
-        # Draw DotAnnotator
-        dot_annotator = sv.DotAnnotator()
+        # Dot DotAnnotator
+        dot_annotator = sv.DotAnnotator(sv.Color.from_hex(str(colordot)))
         img = dot_annotator.annotate(img, detections=detections)
 
     if "Triangle" in annotators:
@@ -186,6 +189,20 @@ with gr.Blocks(theme=purple_theme) as app:
     gr.HTML(SUBTITLE)
     gr.HTML(BANNER)
     gr.HTML(DESC)
+
+    models = gr.Dropdown(
+        [
+            "yolov8n-seg.pt",
+            "yolov8s-seg.pt",
+            "yolov8m-seg.pt",
+            "yolov8l-seg.pt",
+            "yolov8x-seg.pt",
+        ],
+        type="value",
+        value="yolov8s-seg.pt",
+        label="Select Model:",
+    )
+
     annotators = gr.CheckboxGroup(
         choices=[
             "BoundingBox",
@@ -209,21 +226,15 @@ with gr.Blocks(theme=purple_theme) as app:
     with gr.Row(variant="compact"):
         with gr.Column():
             colorbb = gr.ColorPicker(value="#A351FB", label="BoundingBox")
-        with gr.Column():
             colormask = gr.ColorPicker(value="#A351FB", label="Mask")
-        with gr.Column():
             colorellipse = gr.ColorPicker(value="#A351FB", label="Ellipse")
         with gr.Column():
             colorbc = gr.ColorPicker(value="#A351FB", label="BoxCorner")
-        with gr.Column():
             colorcir = gr.ColorPicker(value="#A351FB", label="Circle")
-        with gr.Column():
             colorlabel = gr.ColorPicker(value="#A351FB", label="Label")
         with gr.Column():
             colorhalo = gr.ColorPicker(value="#A351FB", label="Halo")
-        with gr.Column():
             colordot = gr.ColorPicker(value="#A351FB", label="Dot")
-        with gr.Column():
             colortri = gr.ColorPicker(value="#A351FB", label="Triangle")
 
     with gr.Row():
@@ -239,6 +250,7 @@ with gr.Blocks(theme=purple_theme) as app:
         annotator,
         inputs=[
             image_input,
+            models,
             annotators,
             colorbb,
             colormask,
@@ -248,6 +260,7 @@ with gr.Blocks(theme=purple_theme) as app:
             colorlabel,
             colorhalo,
             colortri,
+            colordot,
         ],
         outputs=image_output,
     )

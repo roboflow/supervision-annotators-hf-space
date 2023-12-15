@@ -165,5 +165,9 @@ cython_debug/
 .LSOverride
 
 # YoloV8 files
+yolov8n-seg.pt
 yolov8s-seg.pt
+yolov8m-seg.pt
+yolov8l-seg.pt
+yolov8x-seg.pt
 yolov8s.pt
