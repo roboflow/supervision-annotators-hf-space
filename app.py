@@ -14,6 +14,16 @@ else:
     device = device("cpu")
 
 
+TITLE = """<h1 align="center">Supervision Annotator Playground 🚀</h1>"""
+SUBTITLE = """<h2 align="center">Experiment with Supervision Annotators</h2>"""
+DUPLICATE = """
+<div style="text-align: center; display: flex; justify-content: center; align-items: center;">
+    <a href="https://huggingface.co/spaces/Roboflow/Annotators?duplicate=true">
+        <img src="https://bit.ly/3gLdBN6" alt="Duplicate Space" style="margin-right: 10px;">
+    </a>
+</div>
+"""
+
 def load_model(img):
     # Load model, get results and return detections/labels
     model = YOLO("yolov8s-seg.pt")
@@ -153,7 +163,9 @@ purple_theme = theme = gr.themes.Soft(primary_hue=gr.themes.colors.purple).set(
 )
 
 with gr.Blocks(theme=purple_theme) as app:
-    gr.Markdown("""# Supervision Annotators""")
+    gr.HTML(TITLE)
+    gr.HTML(SUBTITLE)
+    gr.HTML(DUPLICATE)
     annotators = gr.CheckboxGroup(
         choices=[
             "BoundingBox",
