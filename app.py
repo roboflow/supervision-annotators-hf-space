@@ -83,6 +83,7 @@ def annotator(
     colorhalo,
     colortri,
     colordot,
+    progress=gr.Progress(track_tqdm=True),
 ):
     """
     Function that changes the color of annotators
@@ -222,7 +223,7 @@ with gr.Blocks(theme=purple_theme) as app:
         label="Select Annotators:",
     )
 
-    gr.Markdown("🎨 **Color Picker**")
+    gr.Markdown("## Color Picker 🎨")
     with gr.Row(variant="compact"):
         with gr.Column():
             colorbb = gr.ColorPicker(value="#A351FB", label="BoundingBox")
@@ -265,14 +266,14 @@ with gr.Blocks(theme=purple_theme) as app:
         outputs=image_output,
     )
 
-    gr.Markdown("## Image Examples")
+    gr.Markdown("## Image Examples 🖼️")
     gr.Examples(
         examples=[
-            os.path.join(os.path.abspath(""), "city.jpg"),
-            os.path.join(os.path.abspath(""), "household.jpg"),
-            os.path.join(os.path.abspath(""), "industry.jpg"),
-            os.path.join(os.path.abspath(""), "retail.jpg"),
-            os.path.join(os.path.abspath(""), "aerodefence.jpg"),
+            os.path.join(os.path.abspath(""), "./assets/city.jpg"),
+            os.path.join(os.path.abspath(""), "./assets/household.jpg"),
+            os.path.join(os.path.abspath(""), "./assets/industry.jpg"),
+            os.path.join(os.path.abspath(""), "./assets/retail.jpg"),
+            os.path.join(os.path.abspath(""), "./assets/aerodefence.jpg"),
         ],
         inputs=image_input,
         outputs=image_output,
