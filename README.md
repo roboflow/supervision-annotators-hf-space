@@ -7,7 +7,7 @@ sdk: gradio
 sdk_version: 4.8.0
 app_file: app.py
 pinned: false
-license: MIT
+license: mit
 ---
 
 # Supervision Annotators HF Space
