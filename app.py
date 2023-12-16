@@ -4,6 +4,7 @@ from pathlib import Path
 import gradio as gr
 import numpy as np
 import supervision as sv
+from gradio import ColorPicker
 from PIL import Image
 from torch import cuda, device
 from ultralytics import YOLO
@@ -43,6 +44,9 @@ DESC = """
 </div>
 """  # noqa: E501 title/docs
 
+last_detections = sv.Detections.empty()
+last_labels: list[str] = []
+
 
 def load_model(img, model: str | Path = "yolov8s-seg.pt"):
     # Load model, get results and return detections/labels
@@ -54,7 +58,6 @@ def load_model(img, model: str | Path = "yolov8s-seg.pt"):
         for class_id, confidence in zip(detections.class_id, detections.confidence)
     ]
 
-    print(labels)
     return detections, labels
 
 
@@ -70,10 +73,11 @@ def calculate_crop_dim(a, b):
     return width, height
 
 
-def annotator(
+def annotators(
     img,
-    model,
-    annotators,
+    last_detections,
+    annotators_list,
+    last_labels,
     colorbb,
     colormask,
     colorellipse,
@@ -83,82 +87,73 @@ def annotator(
     colorhalo,
     colortri,
     colordot,
-    progress=gr.Progress(track_tqdm=True),
-):
-    """
-    Function that changes the color of annotators
-    Args:
-        annotators: Icon whose color needs to be changed.
-        color: Chosen color with which to edit the input icon in Hex.
-        img: Input image is numpy matrix in BGR.
-    Returns:
-        annotators: annotated image
-    """
+) -> np.ndarray:
+    if last_detections == sv.Detections.empty():
+        gr.Warning("Detection is empty please add image and annotate first")
+        return np.zeros()
 
-    img = img[..., ::-1].copy()  # BGR to RGB using numpy
-
-    detections, labels = load_model(img, model)
-
-    if "Blur" in annotators:
+    if "Blur" in annotators_list:
         # Apply Blur
         blur_annotator = sv.BlurAnnotator()
-        img = blur_annotator.annotate(img, detections=detections)
+        img = blur_annotator.annotate(img, detections=last_detections)
 
-    if "BoundingBox" in annotators:
+    if "BoundingBox" in annotators_list:
         # Draw Boundingbox
         box_annotator = sv.BoundingBoxAnnotator(sv.Color.from_hex(str(colorbb)))
-        img = box_annotator.annotate(img, detections=detections)
+        img = box_annotator.annotate(img, detections=last_detections)
 
-    if "Mask" in annotators:
+    if "Mask" in annotators_list:
         # Draw Mask
         mask_annotator = sv.MaskAnnotator(sv.Color.from_hex(str(colormask)))
-        img = mask_annotator.annotate(img, detections=detections)
+        img = mask_annotator.annotate(img, detections=last_detections)
 
-    if "Ellipse" in annotators:
+    if "Ellipse" in annotators_list:
         # Draw Ellipse
         ellipse_annotator = sv.EllipseAnnotator(sv.Color.from_hex(str(colorellipse)))
-        img = ellipse_annotator.annotate(img, detections=detections)
+        img = ellipse_annotator.annotate(img, detections=last_detections)
 
-    if "BoxCorner" in annotators:
+    if "BoxCorner" in annotators_list:
         # Draw Box corner
         corner_annotator = sv.BoxCornerAnnotator(sv.Color.from_hex(str(colorbc)))
-        img = corner_annotator.annotate(img, detections=detections)
+        img = corner_annotator.annotate(img, detections=last_detections)
 
-    if "Circle" in annotators:
+    if "Circle" in annotators_list:
         # Draw Circle
         circle_annotator = sv.CircleAnnotator(sv.Color.from_hex(str(colorcir)))
-        img = circle_annotator.annotate(img, detections=detections)
+        img = circle_annotator.annotate(img, detections=last_detections)
 
-    if "Label" in annotators:
+    if "Label" in annotators_list:
         # Draw Label
         label_annotator = sv.LabelAnnotator(text_position=sv.Position.CENTER)
         label_annotator = sv.LabelAnnotator(sv.Color.from_hex(str(colorlabel)))
-        img = label_annotator.annotate(img, detections=detections, labels=labels)
+        img = label_annotator.annotate(
+            img, detections=last_detections, labels=last_labels
+        )
 
-    if "Pixelate" in annotators:
+    if "Pixelate" in annotators_list:
         # Apply PixelateAnnotator
         pixelate_annotator = sv.PixelateAnnotator()
-        img = pixelate_annotator.annotate(img, detections=detections)
+        img = pixelate_annotator.annotate(img, detections=last_detections)
 
-    if "Halo" in annotators:
+    if "Halo" in annotators_list:
         # Draw HaloAnnotator
         halo_annotator = sv.HaloAnnotator(sv.Color.from_hex(str(colorhalo)))
-        img = halo_annotator.annotate(img, detections=detections)
+        img = halo_annotator.annotate(img, detections=last_detections)
 
-    if "HeatMap" in annotators:
+    if "HeatMap" in annotators_list:
         # Draw HeatMapAnnotator
         heatmap_annotator = sv.HeatMapAnnotator()
-        img = heatmap_annotator.annotate(img, detections=detections)
+        img = heatmap_annotator.annotate(img, detections=last_detections)
 
-    if "Dot" in annotators:
+    if "Dot" in annotators_list:
         # Dot DotAnnotator
         dot_annotator = sv.DotAnnotator(sv.Color.from_hex(str(colordot)))
-        img = dot_annotator.annotate(img, detections=detections)
+        img = dot_annotator.annotate(img, detections=last_detections)
 
-    if "Triangle" in annotators:
+    if "Triangle" in annotators_list:
         # Draw TriangleAnnotator
         tri_annotator = sv.TriangleAnnotator(sv.Color.from_hex(str(colortri)))
-        img = tri_annotator.annotate(img, detections=detections)
+        img = tri_annotator.annotate(img, detections=last_detections)
 
     # crop image for the largest possible square
     res_img = Image.fromarray(img)
@@ -176,6 +171,54 @@ def annotator(
     # print(type(crop_img))
 
     return crop_img[..., ::-1].copy()  # BGR to RGB using numpy
+
+
+def annotator(
+    img,
+    model,
+    annotators_list,
+    colorbb,
+    colormask,
+    colorellipse,
+    colorbc,
+    colorcir,
+    colorlabel,
+    colorhalo,
+    colortri,
+    colordot,
+    progress=gr.Progress(track_tqdm=True),
+) -> np.ndarray:
+    """
+    Function that changes the color of annotators
+    Args:
+        annotators: Icon whose color needs to be changed.
+        color: Chosen color with which to edit the input icon in Hex.
+        img: Input image is numpy matrix in BGR.
+    Returns:
+        annotators: annotated image
+    """
+
+    img = img[..., ::-1].copy()  # BGR to RGB using numpy
+
+    detections, labels = load_model(img, model)
+    last_detections = detections
+    last_labels = labels
+
+    return annotators(
+        img,
+        last_detections,
+        annotators_list,
+        last_labels,
+        colorbb,
+        colormask,
+        colorellipse,
+        colorbc,
+        colorcir,
+        colorlabel,
+        colorhalo,
+        colortri,
+        colordot,
+    )
 
 
 purple_theme = theme = gr.themes.Soft(primary_hue=gr.themes.colors.purple).set(
@@ -204,7 +247,7 @@ with gr.Blocks(theme=purple_theme) as app:
         label="Select Model:",
     )
 
-    annotators = gr.CheckboxGroup(
+    annotators_list = gr.CheckboxGroup(
         choices=[
             "BoundingBox",
             "Mask",
@@ -224,7 +267,7 @@ with gr.Blocks(theme=purple_theme) as app:
     )
 
     gr.Markdown("## Color Picker 🎨")
-    with gr.Row(variant="compact"):
+    with gr.Row(variant="panel"):
         with gr.Column():
             colorbb = gr.ColorPicker(value="#A351FB", label="BoundingBox")
             colormask = gr.ColorPicker(value="#A351FB", label="Mask")
@@ -252,7 +295,7 @@ with gr.Blocks(theme=purple_theme) as app:
         inputs=[
             image_input,
             models,
-            annotators,
+            annotators_list,
             colorbb,
             colormask,
             colorellipse,
@@ -281,8 +324,63 @@ with gr.Blocks(theme=purple_theme) as app:
         cache_examples=False,
     )
 
+    annotators_list.change(
+        fn=annotator,
+        inputs=[
+            image_input,
+            models,
+            annotators_list,
+            colorbb,
+            colormask,
+            colorellipse,
+            colorbc,
+            colorcir,
+            colorlabel,
+            colorhalo,
+            colortri,
+            colordot,
+        ],
+        outputs=image_output,
+    )
+
+    def change_color(color: ColorPicker):
+        color.change(
+            fn=annotator,
+            inputs=[
+                image_input,
+                models,
+                annotators_list,
+                colorbb,
+                colormask,
+                colorellipse,
+                colorbc,
+                colorcir,
+                colorlabel,
+                colorhalo,
+                colortri,
+                colordot,
+            ],
+            outputs=image_output,
+        )
+
+    colors = [
+        colorbb,
+        colormask,
+        colorellipse,
+        colorbc,
+        colorcir,
+        colorlabel,
+        colorhalo,
+        colortri,
+        colordot,
+    ]
+
+    for color in colors:
+        change_color(color)
+
 
 if __name__ == "__main__":
     print("Starting app...")
     print("Dark theme is available at: http://localhost:7860/?__theme=dark")
+    # app.launch(debug=False, server_name="0.0.0.0")  # for local network
     app.launch(debug=False)
