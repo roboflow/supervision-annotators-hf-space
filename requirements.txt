@@ -3,3 +3,4 @@ gradio
 ultralytics
 supervision
 matplotlib
+tqdm
