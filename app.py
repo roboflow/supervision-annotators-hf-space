@@ -95,7 +95,6 @@ def annotators(
 
     if "Label" in annotators_list:
         # Draw Label
-        label_annotator = sv.LabelAnnotator(text_position=sv.Position.CENTER)
         label_annotator = sv.LabelAnnotator(sv.Color.from_hex(str(colorlabel)))
         img = label_annotator.annotate(
             img, detections=last_detections, labels=last_labels
@@ -289,6 +288,9 @@ with gr.Blocks(theme=purple_theme) as app:
                 os.path.join(os.path.abspath(""), "./assets/industry.jpg"),
                 os.path.join(os.path.abspath(""), "./assets/retail.jpg"),
                 os.path.join(os.path.abspath(""), "./assets/aerodefence.jpg"),
+                "https://media.roboflow.com/efficient-sam/corgi.jpg",
+                "https://media.roboflow.com/efficient-sam/horses.jpg",
+                "https://media.roboflow.com/efficient-sam/bears.jpg",
             ],
             inputs=image_input,
             outputs=image_output,
