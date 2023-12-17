@@ -359,5 +359,5 @@ with gr.Blocks(theme=purple_theme) as app:
 if __name__ == "__main__":
     print("Starting app...")
     print("Dark theme is available at: http://localhost:7860/?__theme=dark")
-    app.launch(debug=False, server_name="0.0.0.0")  # for local network
-    # app.launch(debug=False)
+    # app.launch(debug=False, server_name="0.0.0.0")  # for local network
+    app.launch(debug=False)

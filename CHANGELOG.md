@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Bug Fixes
+
+- 🐞 set app.launch(debug=False) to default
+
 ### Documentation
 
 - 📝 License contributor section updated
