@@ -9,40 +9,16 @@ from PIL import Image
 from torch import cuda, device
 from ultralytics import YOLO
 
+from src.gradio_desc import BANNER, DESC, SUBTITLE, TITLE
+from src.sam_tab import sam_annotator_tab
+from src.video_tab import video_annotator_tab
+
 # Use GPU if available
 if cuda.is_available():
     device = device("cuda")
 else:
     device = device("cpu")
 
-
-TITLE = """<h1 align="center">Supervision Annotator Playground 🚀</h1>"""
-SUBTITLE = """<h2 align="center">Experiment with Supervision Annotators</h2>"""
-BANNER = """
-<div align="center">
-    <p>
-        <a align="center" href="https://supervision.roboflow.com/" target="_blank">
-            <img style="max-width: 50%; height: auto; margin: 0 auto; display: block; padding: 20"
-                src="https://media.roboflow.com/open-source/supervision/rf-supervision-banner.png?updatedAt=1678995927529">
-        </a>
-    </p>
-</div>
-"""  # noqa: E501 title/docs
-DESC = """
-<div style="text-align: center; display: flex; justify-content: center; align-items: center;">
-    <a href="https://huggingface.co/spaces/Roboflow/Annotators?duplicate=true">
-        <img src="https://bit.ly/3gLdBN6" alt="Duplicate Space" style="margin-right: 10px;">
-    </a>
-    <a href="https://github.com/roboflow/supervision">
-        <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/roboflow/supervision"
-            style="margin-right: 10px;">
-    </a>
-    <a href="https://colab.research.google.com/github/roboflow/supervision/blob/main/demo.ipynb">
-        <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"
-            style="margin-right: 10px;">
-    </a>
-</div>
-"""  # noqa: E501 title/docs
 
 last_detections = sv.Detections.empty()
 last_labels: list[str] = []
@@ -234,117 +210,98 @@ with gr.Blocks(theme=purple_theme) as app:
     gr.HTML(BANNER)
     gr.HTML(DESC)
 
-    models = gr.Dropdown(
-        [
-            "yolov8n-seg.pt",
-            "yolov8s-seg.pt",
-            "yolov8m-seg.pt",
-            "yolov8l-seg.pt",
-            "yolov8x-seg.pt",
-        ],
-        type="value",
-        value="yolov8s-seg.pt",
-        label="Select Model:",
-    )
+    with gr.Tab("Image Annotator(YoloV8)"):
+        models = gr.Dropdown(
+            [
+                "yolov8n-seg.pt",
+                "yolov8s-seg.pt",
+                "yolov8m-seg.pt",
+                "yolov8l-seg.pt",
+                "yolov8x-seg.pt",
+            ],
+            type="value",
+            value="yolov8s-seg.pt",
+            label="Select Model:",
+        )
 
-    annotators_list = gr.CheckboxGroup(
-        choices=[
-            "BoundingBox",
-            "Mask",
-            "Halo",
-            "Ellipse",
-            "BoxCorner",
-            "Circle",
-            "Label",
-            "Blur",
-            "Pixelate",
-            "HeatMap",
-            "Dot",
-            "Triangle",
-        ],
-        value=["BoundingBox", "Mask"],
-        label="Select Annotators:",
-    )
+        annotators_list = gr.CheckboxGroup(
+            choices=[
+                "BoundingBox",
+                "Mask",
+                "Halo",
+                "Ellipse",
+                "BoxCorner",
+                "Circle",
+                "Label",
+                "Blur",
+                "Pixelate",
+                "HeatMap",
+                "Dot",
+                "Triangle",
+            ],
+            value=["BoundingBox", "Mask"],
+            label="Select Annotators:",
+        )
 
-    gr.Markdown("## Color Picker 🎨")
-    with gr.Row(variant="panel"):
-        with gr.Column():
-            colorbb = gr.ColorPicker(value="#A351FB", label="BoundingBox")
-            colormask = gr.ColorPicker(value="#A351FB", label="Mask")
-            colorellipse = gr.ColorPicker(value="#A351FB", label="Ellipse")
-        with gr.Column():
-            colorbc = gr.ColorPicker(value="#A351FB", label="BoxCorner")
-            colorcir = gr.ColorPicker(value="#A351FB", label="Circle")
-            colorlabel = gr.ColorPicker(value="#A351FB", label="Label")
-        with gr.Column():
-            colorhalo = gr.ColorPicker(value="#A351FB", label="Halo")
-            colordot = gr.ColorPicker(value="#A351FB", label="Dot")
-            colortri = gr.ColorPicker(value="#A351FB", label="Triangle")
+        gr.Markdown("## Color Picker 🎨")
+        with gr.Row(variant="panel"):
+            with gr.Column():
+                colorbb = gr.ColorPicker(value="#A351FB", label="BoundingBox")
+                colormask = gr.ColorPicker(value="#A351FB", label="Mask")
+                colorellipse = gr.ColorPicker(value="#A351FB", label="Ellipse")
+            with gr.Column():
+                colorbc = gr.ColorPicker(value="#A351FB", label="BoxCorner")
+                colorcir = gr.ColorPicker(value="#A351FB", label="Circle")
+                colorlabel = gr.ColorPicker(value="#A351FB", label="Label")
+            with gr.Column():
+                colorhalo = gr.ColorPicker(value="#A351FB", label="Halo")
+                colordot = gr.ColorPicker(value="#A351FB", label="Dot")
+                colortri = gr.ColorPicker(value="#A351FB", label="Triangle")
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Tab("Input image"):
-                image_input = gr.Image(type="numpy", show_label=False)
-        with gr.Column():
-            with gr.Tab("Result image"):
-                image_output = gr.Image(type="numpy", show_label=False)
-    image_button = gr.Button(value="Annotate it!", variant="primary")
+        with gr.Row():
+            with gr.Column():
+                with gr.Tab("Input image"):
+                    image_input = gr.Image(type="numpy", show_label=False)
+            with gr.Column():
+                with gr.Tab("Result image"):
+                    image_output = gr.Image(type="numpy", show_label=False)
+        image_button = gr.Button(value="Annotate it!", variant="primary")
 
-    image_button.click(
-        annotator,
-        inputs=[
-            image_input,
-            models,
-            annotators_list,
-            colorbb,
-            colormask,
-            colorellipse,
-            colorbc,
-            colorcir,
-            colorlabel,
-            colorhalo,
-            colortri,
-            colordot,
-        ],
-        outputs=image_output,
-    )
+        image_button.click(
+            annotator,
+            inputs=[
+                image_input,
+                models,
+                annotators_list,
+                colorbb,
+                colormask,
+                colorellipse,
+                colorbc,
+                colorcir,
+                colorlabel,
+                colorhalo,
+                colortri,
+                colordot,
+            ],
+            outputs=image_output,
+        )
 
-    gr.Markdown("## Image Examples 🖼️")
-    gr.Examples(
-        examples=[
-            os.path.join(os.path.abspath(""), "./assets/city.jpg"),
-            os.path.join(os.path.abspath(""), "./assets/household.jpg"),
-            os.path.join(os.path.abspath(""), "./assets/industry.jpg"),
-            os.path.join(os.path.abspath(""), "./assets/retail.jpg"),
-            os.path.join(os.path.abspath(""), "./assets/aerodefence.jpg"),
-        ],
-        inputs=image_input,
-        outputs=image_output,
-        fn=annotator,
-        cache_examples=False,
-    )
+        gr.Markdown("## Image Examples 🖼️")
+        gr.Examples(
+            examples=[
+                os.path.join(os.path.abspath(""), "./assets/city.jpg"),
+                os.path.join(os.path.abspath(""), "./assets/household.jpg"),
+                os.path.join(os.path.abspath(""), "./assets/industry.jpg"),
+                os.path.join(os.path.abspath(""), "./assets/retail.jpg"),
+                os.path.join(os.path.abspath(""), "./assets/aerodefence.jpg"),
+            ],
+            inputs=image_input,
+            outputs=image_output,
+            fn=annotator,
+            cache_examples=False,
+        )
 
-    annotators_list.change(
-        fn=annotator,
-        inputs=[
-            image_input,
-            models,
-            annotators_list,
-            colorbb,
-            colormask,
-            colorellipse,
-            colorbc,
-            colorcir,
-            colorlabel,
-            colorhalo,
-            colortri,
-            colordot,
-        ],
-        outputs=image_output,
-    )
-
-    def change_color(color: ColorPicker):
-        color.change(
+        annotators_list.change(
             fn=annotator,
             inputs=[
                 image_input,
@@ -363,24 +320,47 @@ with gr.Blocks(theme=purple_theme) as app:
             outputs=image_output,
         )
 
-    colors = [
-        colorbb,
-        colormask,
-        colorellipse,
-        colorbc,
-        colorcir,
-        colorlabel,
-        colorhalo,
-        colortri,
-        colordot,
-    ]
+        def change_color(color: ColorPicker):
+            color.change(
+                fn=annotator,
+                inputs=[
+                    image_input,
+                    models,
+                    annotators_list,
+                    colorbb,
+                    colormask,
+                    colorellipse,
+                    colorbc,
+                    colorcir,
+                    colorlabel,
+                    colorhalo,
+                    colortri,
+                    colordot,
+                ],
+                outputs=image_output,
+            )
 
-    for color in colors:
-        change_color(color)
+        colors = [
+            colorbb,
+            colormask,
+            colorellipse,
+            colorbc,
+            colorcir,
+            colorlabel,
+            colorhalo,
+            colortri,
+            colordot,
+        ]
+
+        for color in colors:
+            change_color(color)
+
+    sam_annotator_tab(gr)
+    video_annotator_tab(gr)
 
 
 if __name__ == "__main__":
     print("Starting app...")
     print("Dark theme is available at: http://localhost:7860/?__theme=dark")
-    # app.launch(debug=False, server_name="0.0.0.0")  # for local network
-    app.launch(debug=False)
+    app.launch(debug=False, server_name="0.0.0.0")  # for local network
+    # app.launch(debug=False)
