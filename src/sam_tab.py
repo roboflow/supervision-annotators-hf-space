@@ -1,12 +1,12 @@
 import gradio as gr
 import supervision as sv
-import torch
 from transformers import SamModel, SamProcessor
+
+from src import DEVICE
 
 # gradio Segmentation Anything Demo
 
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MASK_ANNOTATOR = sv.MaskAnnotator(color_lookup=sv.ColorLookup.INDEX)
 
 

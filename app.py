@@ -6,20 +6,14 @@ import numpy as np
 import supervision as sv
 from gradio import ColorPicker
 from PIL import Image
-from torch import cuda, device
 from ultralytics import YOLO
 
+from src import DEVICE
 from src.gradio_desc import BANNER, DESC, SUBTITLE, TITLE
 from src.sam_tab import sam_annotator_tab
 from src.video_tab import video_annotator_tab
 
-# Use GPU if available
-if cuda.is_available():
-    device = device("cuda")
-else:
-    device = device("cpu")
-
-
+device = DEVICE
 last_detections = sv.Detections.empty()
 last_labels: list[str] = []
 
