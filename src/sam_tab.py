@@ -1,13 +1,16 @@
 import gradio as gr
-import supervision as sv
-from transformers import SamModel, SamProcessor
 
-from src import DEVICE
+from src.sam.sam_examples import POINT_EXAMPLES
+from src.sam.sam_inference import SamInference
 
 # gradio Segmentation Anything Demo
 
+sam_inference = SamInference()
 
-MASK_ANNOTATOR = sv.MaskAnnotator(color_lookup=sv.ColorLookup.INDEX)
+
+def sam_segmentation(model, image):
+    sam_inference.set_sam_model(model)
+    sam_inference.set_sam_processor(model)
 
 
 # SAM Mode enum for point and box input and defualt to point
@@ -18,12 +21,6 @@ class SamMode:
 
 # SAM Mode enum default to point
 sam_mode: SamMode = SamMode.POINT
-
-
-def sam_segmentation(input, model: str):
-    """Run the segmentation model on the input image."""
-    SamModel.from_pretrained(model).to(DEVICE)
-    SamProcessor.from_pretrained(model)
 
 
 box_input_image = gr.Image(label="SAM Box Input")
@@ -70,6 +67,12 @@ def box_and_point_menu(gr: gr):
                     with gr.Row():
                         x_number.render()
                         y_number.render()
+        gr.Examples(
+            fn=sam_inference.sam_point_inference,
+            examples=POINT_EXAMPLES,
+            inputs=[point_input_image, x_number, y_number],
+            outputs=[point_output_image],
+        )
 
 
 def sam_models(gr: gr):
@@ -95,5 +98,7 @@ def sam_annotator_tab(gr: gr):
             fn=sam_segmentation, inputs=[model, model], outputs=[box_output_image]
         )
         point_annotate_button.click(
-            fn=sam_segmentation, inputs=[model, model], outputs=[point_output_image]
+            fn=sam_inference.sam_point_inference,
+            inputs=[point_input_image, x_number, y_number],
+            outputs=[point_output_image],
         )

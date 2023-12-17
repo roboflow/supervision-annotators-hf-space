@@ -11,7 +11,8 @@ from ultralytics import YOLO
 from src import DEVICE
 from src.gradio_desc import BANNER, DESC, SUBTITLE, TITLE
 from src.sam_tab import sam_annotator_tab
-from src.video_tab import video_annotator_tab
+
+# from src.video_tab import video_annotator_tab
 
 device = DEVICE
 last_detections = sv.Detections.empty()
@@ -350,7 +351,7 @@ with gr.Blocks(theme=purple_theme) as app:
             change_color(color)
 
     sam_annotator_tab(gr)
-    video_annotator_tab(gr)
+    # video_annotator_tab(gr)
 
 
 if __name__ == "__main__":
