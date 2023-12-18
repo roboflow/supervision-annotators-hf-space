@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - 🖼️  sam example box and points are added
 - ✨ SAM point and samInference class added
 - ✨ SAM box Inference and progressbar for downloading sam models
+- ✨ move annotator under src folder and create better folder structure
 
 ### Miscellaneous Tasks
 

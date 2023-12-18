@@ -1,3 +1,5 @@
+import gradio as gr
+
 TITLE = """<h1 align="center">Supervision Annotator Playground 🚀</h1>"""
 SUBTITLE = """<h2 align="center">Experiment with Supervision Annotators</h2>"""
 BANNER = """
@@ -25,3 +27,10 @@ DESC = """
     </a>
 </div>
 """  # noqa: E501 title/docs
+
+
+def gradio_desc(gr: gr):
+    gr.HTML(TITLE)
+    gr.HTML(SUBTITLE)
+    gr.HTML(BANNER)
+    gr.HTML(DESC)

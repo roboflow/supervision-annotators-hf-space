@@ -30,3 +30,15 @@ def calculate_dynamic_circle_radius(resolution_wh: Tuple[int, int]) -> int:
         return 16
     else:
         return 16
+
+
+def calculate_crop_dim(a, b):
+    # Calculates the crop dimensions of the image resultant
+    if a > b:
+        width = a
+        height = a
+    else:
+        width = b
+        height = b
+
+    return width, height
