@@ -4,3 +4,5 @@ ultralytics
 supervision
 matplotlib
 tqdm
+transformers
+pillow
