@@ -1,6 +1,8 @@
 numpy
 gradio
 ultralytics
-supervision
+supervision>= 0.18.0
 matplotlib
 tqdm
+transformers
+pillow
