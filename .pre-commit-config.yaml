@@ -18,6 +18,7 @@ repos:
       - id: check-toml
       - id: check-case-conflict
       - id: check-added-large-files
+        args: ['--maxkb=4000']
       - id: detect-private-key
       - id: forbid-new-submodules
       - id: pretty-format-json
@@ -29,14 +30,14 @@ repos:
 
 
   -   repo: https://github.com/PyCQA/bandit
-      rev: '1.7.6'
+      rev: '1.7.7'
       hooks:
       -   id: bandit
           args: ["-c", "pyproject.toml"]
           additional_dependencies: ["bandit[toml]"]
 
   -   repo: https://github.com/pycqa/isort
-      rev: 5.13.0
+      rev: 5.13.2
       hooks:
       -   id: isort
           name: isort (python)
@@ -46,7 +47,7 @@ repos:
 
 
   -   repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.1.7
+      rev: v0.1.14
       hooks:
       -   id: ruff
           args: [--fix, --exit-non-zero-on-fix]

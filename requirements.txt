@@ -1,7 +1,7 @@
 numpy
 gradio
 ultralytics
-supervision
+supervision==0.18.0rc4
 matplotlib
 tqdm
 transformers

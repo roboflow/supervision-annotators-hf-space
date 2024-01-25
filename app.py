@@ -1,5 +1,7 @@
-import gradio as gr
 import os
+
+import gradio as gr
+
 from src.annotator_tab import annotator_tab
 from src.gradio_desc import gradio_desc
 from src.sam_tab import sam_annotator_tab
@@ -29,4 +31,3 @@ if __name__ == "__main__":
     print("Starting app in outside space repo... (Debug mode))")
     print("Dark theme is available at: http://localhost:7860/?__theme=dark")
     app.launch(debug=True, server_name="0.0.0.0")  # for local network
-

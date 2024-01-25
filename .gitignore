@@ -171,3 +171,4 @@ yolov8m-seg.pt
 yolov8l-seg.pt
 yolov8x-seg.pt
 yolov8s.pt
+yolov*.pt

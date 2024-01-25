@@ -14,10 +14,10 @@ last_detections = sv.Detections.empty()
 last_labels: list[str] = []
 
 
-def load_model(img, model: str | Path = "yolov8s-seg.pt"):
+def load_model(img, confidience, model: str | Path = "yolov8s-seg.pt"):
     # Load model, get results and return detections/labels
     model = YOLO(model=model)
-    result = model(img, verbose=False, imgsz=1280)[0]
+    result = model.predict(img, verbose=False, imgsz=1280, conf=confidience)[0]
     detections = sv.Detections.from_ultralytics(result)
     labels = [
         f"{model.model.names[class_id]} {confidence:.2f}"
@@ -41,9 +41,13 @@ def annotators(
     colorhalo,
     colortri,
     colordot,
+    colorperc,
+    colorobb,
 ) -> np.ndarray:
     if last_detections == sv.Detections.empty():
-        gr.Warning("Detection is empty please add image and annotate first")
+        # Image can be empty or no detections found warning message
+        gr.Warning("No detections found or image is empty please check "
+                   "your image or confidience") 
         return np.zeros()
 
     if "Blur" in annotators_list:
@@ -105,8 +109,22 @@ def annotators(
 
     if "Triangle" in annotators_list:
         # Draw TriangleAnnotator
-        tri_annotator = sv.TriangleAnnotator(sv.Color.from_hex(str(colortri)))
+        tri_annotator = sv.TriangleAnnotator(color=sv.Color.from_hex(str(colortri)))
         img = tri_annotator.annotate(img, detections=last_detections)
+
+    if "Percentage" in annotators_list:
+        # Draw PercentageBarAnnotator
+        perc_bar_annotator = sv.PercentageBarAnnotator(
+            color=sv.Color.from_hex(str(colorperc))
+        )
+        img = perc_bar_annotator.annotate(img, detections=last_detections)
+
+    if "OrientedBoundingBox" in annotators_list:
+        # Draw OrientedBoundingBoxAnnotator
+        oriented_bbox_annotator = sv.OrientedBoxAnnotator(
+            color=sv.Color.from_hex(str(colorobb))
+        )
+        img = oriented_bbox_annotator.annotate(img, detections=last_detections)
 
     # crop image for the largest possible square
     res_img = Image.fromarray(img)
@@ -130,6 +148,7 @@ def annotator(
     img,
     model,
     annotators_list,
+    confidience,
     colorbb,
     colormask,
     colorellipse,
@@ -139,6 +158,8 @@ def annotator(
     colorhalo,
     colortri,
     colordot,
+    colorperc,
+    colorobb,
     progress=gr.Progress(track_tqdm=True),
 ) -> np.ndarray:
     """
@@ -153,7 +174,7 @@ def annotator(
 
     img = img[..., ::-1].copy()  # BGR to RGB using numpy
 
-    detections, labels = load_model(img, model)
+    detections, labels = load_model(img, confidience, model)
     last_detections = detections
     last_labels = labels
 
@@ -171,4 +192,6 @@ def annotator(
         colorhalo,
         colortri,
         colordot,
+        colorperc,
+        colorobb,
     )
